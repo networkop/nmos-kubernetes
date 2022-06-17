@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nmos-cpp-node
+  labels:
+    app.kubernetes.io/name: nmos-node
+  annotations:
+    k8s.v1.cni.cncf.io/networks: |
+          [
+            { "name": "rdmanet-static",
+              "ips": [ "192.168.102.254/24" ]
+            }
+          ]
+spec:
+  containers:
+  - name: nmos-cpp-node
+    image: docker.io/rhastie/nmos-cpp:dev-9302bf5
+    #    image: harbor.mellanox.com/nbu-solutions-labs/nmos-cpp:1.2A-7ca64c4
+    env:
+    - name: RUN_NODE
+      value: "TRUE"
+    resources:
+#      requests:
+#        cpu: 2
+#        memory: 1Gi
+#        nvidia.com/rdmapool: 1
+#      limits:
+#        cpu: 2
+#`        memory: 1Gi
+#        nvidia.com/rdmapool: 1
+    volumeMounts:
+     - mountPath: /home/node.json
+       subPath: node.json
+       name: config-volume
+    ports:
+      - containerPort: 11000
+        name: port-11000
+      - containerPort: 11001
+        name: port-11001
+  volumes:
+  - configMap:
+      defaultMode: 420
+      items:
+      - key: node.json
+        path: node.json
+      name: nmos-node
+    name: config-volume
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nmos-node
+data: 
+  node.json: | 
+    {
+      "logging_level": 0,
+      "domain": "nmos.tv",
+      "http_port": 11000,
+      "discovery_mode": 1,
+      "events_ws_port": 11001,
+      "label": "nmos-cpp-node",
+      "how_many": 5
+    }
+---
+#---
+#apiVersion: v1
+#kind: Service
+#metadata:
+#  name: nmos-cpp-registry
+#spec:
+#  type: NodePort
+#  selector:
+#    name: nmos-cpp-registry
+#  ports:
+#      # By default and for convenience, the `targetPort` is set to the same value as the `port` field.
+#    - port: 8010
+#      name: http-port
+#      targetPort: 8010

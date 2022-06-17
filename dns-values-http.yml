@@ -1,0 +1,71 @@
+domain: nmos.tv
+debug:
+  enabled: true
+fallthrough:
+  enabled: true
+  zones: [nmos.tv]
+extraZonePlugins: "forward . 1.1.1.1:53 8.8.8.8:53"
+zoneFile:
+  filename: nmos.tv
+  contents: |
+    $ORIGIN nmos.tv.
+    $TTL 38400
+    @ IN SOA dns.nmos.tv. richh.mellanox.com. (
+      1558190162
+      10800
+      3600
+      604800
+      38400 )
+    IN NS dns.nmos.tv.
+    ; These lines indicate to clients that this server supports DNS Service Discovery
+    b._dns-sd._udp	IN	PTR	@
+    lb._dns-sd._udp	IN	PTR	@
+
+    ; These lines indicate to clients which service types this server may advertise
+    _services._dns-sd._udp	PTR	_nmos-register._tcp
+    _services._dns-sd._udp	PTR	_nmos-registration._tcp
+    _services._dns-sd._udp	PTR	_nmos-query._tcp
+    _services._dns-sd._udp	PTR	_nmos-system._tcp
+    _services._dns-sd._udp	PTR	_nmos-auth._tcp
+    _services._dns-sd._udp	PTR	_nmos-mqtt._tcp
+
+    ; These lines give the fully qualified DNS names to the IP addresses of the hosts which we'd like to discover
+    ; This example uses a domain of 'nmos.tv'. We recommend using a subdomain of a domain name which you own.
+    ; This example has a resolvable DNS host/name (as a A records) which points to the relevant host operating the service
+    ; registry.nmos.tv.	IN	A	192.168.39.1
+    ; dns.nmos.tv.		IN	A	192.168.39.1
+
+    ; There should be one PTR record for each instance of the service you wish to advertise.
+    _nmos-register._tcp	PTR	reg-api-1._nmos-register._tcp
+    _nmos-registration._tcp	PTR	reg-api-1._nmos-registration._tcp
+    _nmos-query._tcp	PTR	qry-api-1._nmos-query._tcp
+    _nmos-system._tcp	PTR	sys-api-1._nmos-system._tcp
+    _nmos-auth._tcp		PTR	auth-api-1._nmos-auth._tcp
+    _nmos-mqtt._tcp		PTR	mqtt-api-1._nmos-mqtt._tcp
+
+    ; Next we have a SRV and a TXT record corresponding to each PTR above, first the Registration API
+    ; The SRV links the PTR name to a resolvable DNS name (see the A records above) and identify the port which the API runs on
+    ; The TXT records indicate additional metadata relevant to the IS-04 spec
+    ; Details below support AMWA NMOS IS-04 v1.3 and upwards
+    reg-api-1._nmos-register._tcp		SRV	0 0 80 registry.nmos.tv.
+    reg-api-1._nmos-register._tcp		TXT	"api_ver=v1.0,v1.1,v1.2,v1.3" "api_proto=http" "api_auth=false" "pri=0"
+
+    ; Details below support old implementations of AMWA NMOS IS-04 up to v1.2
+    reg-api-1._nmos-registration._tcp	SRV	0 0 80 registry.nmos.tv.
+    reg-api-1._nmos-registration._tcp	TXT	"api_ver=v1.0,v1.1,v1.2" "api_proto=http" "api_auth=false" "pri=0"
+
+    ; The SRV and TXT for the Query API (AMWA NMOS IS-04)
+    qry-api-1._nmos-query._tcp		SRV	0 0 80 registry.nmos.tv.
+    qry-api-1._nmos-query._tcp		TXT	"api_ver=v1.0,v1.1,v1.2,v1.3" "api_proto=http" "api_auth=false" "pri=0"
+
+    ; The SRV and TXT for the System API (AMWA NMOS IS-09)
+    sys-api-1._nmos-system._tcp		SRV	0 0 80 registry.nmos.tv.
+    sys-api-1._nmos-system._tcp		TXT	"api_ver=v1.0" "api_proto=http" "api_auth=false" "pri=0"
+
+    ; The SRV and TXT for the Authisation API (AMWA NMOS IS-10)
+    auth-api-1._nmos-auth._tcp		SRV	0 0 4999 registry.nmos.tv.
+    auth-api-1._nmos-auth._tcp		TXT	"api_ver=v1.0" "api_proto=http" "pri=0"
+
+    ; The SRV and TXT for the MQTT Broker (AMWA NMOS IS-05/IS-07)
+    mqtt-api-1._nmos-mqtt._tcp		SRV	0 0 1883 registry.nmos.tv.
+    mqtt-api-1._nmos-mqtt._tcp		TXT	"api_proto=mqtt" "api_auth=false"
